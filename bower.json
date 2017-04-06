@@ -1,0 +1,21 @@
+{
+  "name": "st-markdown",
+  "authors": [
+    "Raj Ranjan <raj.ranjan@alepo.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "showdown": "^1.6.4",
+    "highlightjs": "^9.10.0"
+  }
+}
