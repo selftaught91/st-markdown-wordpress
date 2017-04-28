@@ -2,6 +2,10 @@
 /*
  Plugin Name: ST-Markdown
  Version: 0.1
+ Plugin URI: www.selftuts.com
+ Description: ST-Markdown helps to create your markdown in a easy user interface
+ Author: SelfTuts
+
  */
 
 global $wp_version;
@@ -14,77 +18,50 @@ if(version_compare($wp_version,"4.7",">=")){
     exit("The version of plugin needs wordpress version to be greater than 4.7");
 }
 
-require_once("vendor/erusev/parsedown/Parsedown.php");
-$Parsedown = new Parsedown();
 $st_plugin_url=trailingslashit(WP_PLUGIN_URL.'/'.dirname(plugin_basename(__FILE__)));
+//Including the markdown parser
+require_once("vendor/erusev/parsedown/Parsedown.php");
+require_once("include/add-menu.php");
+require_once("include/add-scripts.php");
+require_once("include/settings-options.php");
+require_once("include/meta-boxes.php");
 
 
-//Adding the required javascript files for
 
-function st_markdown_add_scipts(){
-    wp_enqueue_style(
-        'highl',
-        plugin_dir_url(__FILE__).'bower_components/highlightjs/styles/solarized-light.css',
-        null,
-        null,
-        'all'
-    );
+#add_action('admin_init','st_markdown_on_admin_init');
+add_action('admin_menu','st_markdown_on_admin_menu');
+add_action('add_meta_boxes','st_markdown_meta_boxes');
+add_action('save_post','st_markdown_save_data_isMarkdownPost');
+//applying the filter
+add_filter('the_content','st_markdown_add_class_in_the_content');
+add_action("wp_enqueue_scripts","st_markdown_add_scripts");
 
-    wp_enqueue_script("jquery");
 
-    wp_enqueue_script(
-        'highlight',
-        plugin_dir_url(__FILE__).'bower_components/highlightjs/highlight.pack.min.js',
-        ["jquery"],
-        null,
-        false
-    );
-    wp_enqueue_script(
-        'st-markdown-main',
-        plugin_dir_url(__FILE__).'js/st-markdown-main.js',
-        ["jquery"],
-        null,
-        false
-    );
+$Parsedown = new Parsedown();
 
-}
-add_action("wp_enqueue_scripts","st_markdown_add_scipts");
-
-//adding filter
-function add_class_in_the_content($data){
+function st_markdown_add_class_in_the_content($data){
     global $post;
+    $isMarkdownActive = get_option('st_markdown_general_settings_is_markdown_active');
+    $isPostSupportMarkdown=get_post_meta($post->ID,'_st_markdown_metabox_field_isMarkdown',true);
+    if($isMarkdownActive!=1 || $isPostSupportMarkdown!=1){
+        return $data;
+    }
     global $Parsedown;
     return $Parsedown->text($post->post_content);
 }
 
-add_filter('the_content','add_class_in_the_content');
 
-function st_add_settings_menu_page(){
-    add_options_page(
-        "Markdown Settings",
-        "ST-Markdown",
-        "manage_options",
-        "st-markdown",
-        "st_markdown_options_page"
-    );
+function st_markdown_on_admin_menu(){
+    //calling function for adding main menu
+    st_markdown_add_menu_page();
+    
+    st_markdown_settings();
+}
 
-    // creating a brand new menu
-    add_menu_page(
-        "ST-Markdown",
-        "Markdown Settings",
-        "manage_options",
-        "markdown",
-        "st_add_markdown_menu_page",
-        "dashicons-image-filter",
-        50
-    );
+function st_markdown_meta_boxes(){
+    //checking if user has selected the markdown to be active of not it the settings
+    $isMarkdownActive = get_option('st_markdown_general_settings_is_markdown_active');
+    if($isMarkdownActive==1){
+        st_markdown_metabox_general();
+    }
 }
-//this functions helps us to add sub menu to the settings menu
-function st_markdown_options_page(){
-    echo "<h1>Raj Ranjan</h1>";
-}
-//this function helps us to add a new menu
-function st_add_markdown_menu_page(){
-    echo "<h1>Markdown Settings</h1>";
-}
-add_action('admin_menu','st_add_settings_menu_page');
